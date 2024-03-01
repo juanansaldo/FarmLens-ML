@@ -9,6 +9,8 @@ To activate environment: <br>
 Once the environment is activated, install the libraries.
 
 Dependencies: <br>
-<b>pip install tensorflow
-pip install scikit-learn
-pip install cv2</b>
+<b> 
+pip install tensorflow <br>
+pip install scikit-learn <br>
+pip install cv2
+</b>
