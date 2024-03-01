@@ -1,4 +1,4 @@
-This is the FarmLens Machine Learning repository.
+This is the FarmLens: Machine Learning repository.
 
 A virtual environment is necessary. To create a virtual environment in your current directory: <br>
 python -m venv <environment_name>
