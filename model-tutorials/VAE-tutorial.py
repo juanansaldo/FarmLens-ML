@@ -110,28 +110,32 @@ z_decoded = decoder(z)
 
 # VAE is trained using two loss functions' reconstruction loss, and KL divergence
 # Let us add a class to define a custom layer with loss
-class CustomLayer(keras.layers.Layer):
+class CustomLayer(layers.Layer):
 
-    def vae_loss(self, x, z_decoded):
+    def vae_loss(self, x, z_decoded, z_mu, z_sigma):
         x = K.flatten(x)
         z_decoded = K.flatten(z_decoded)
 
-        # Reconstruction loss (as we used sigmoid activation, we can use binary crossentropy)
+        # Reconstruction loss (as we used sigmoid activation we can use binarycrossentropy)
         recon_loss = keras.metrics.binary_crossentropy(x, z_decoded)
 
         # KL divergence
         kl_loss = -5e-4 * K.mean(1 + z_sigma - K.square(z_mu) - K.exp(z_sigma), axis=-1)
         return K.mean(recon_loss + kl_loss)
 
-    # add a custom loss to the class
+    # add custom loss to the class
     def call(self, inputs):
-        x, z_decoded = inputs
-        loss = self.vae_loss(x, z_decoded)
+        x = inputs[0]
+        z_decoded = inputs[1]
+        z_mu = inputs[2]
+        z_sigma = inputs[3]
+
+        loss = self.vae_loss(x, z_decoded, z_mu, z_sigma)
         self.add_loss(loss, inputs=inputs)
         return x
 
 # apply the custom loss to the input images and the decoded latent distribution
-y = CustomLayer()([input_img, z_decoded])
+y = CustomLayer()([input_img, z_decoded, z_mu, z_sigma])
 
 # y is basically the original image after encoding input img to mu, sigma, z,
 # and decoding sampled z values.
