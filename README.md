@@ -4,7 +4,7 @@ A virtual environment is necessary. To create a virtual environment in your curr
 python -m venv <environment_name>
 
 To activate environment: <br>
-MacOS: source <environment_name>/bin/activate
+MacOS: source <environment_name>/bin/activate <br>
 Windows: .\<environment_name>\Scripts\activate
 
 Once the environment is activated, install the libraries.
