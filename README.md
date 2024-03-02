@@ -4,11 +4,12 @@ A virtual environment is necessary. To create a virtual environment in your curr
 python -m venv <environment_name>
 
 To activate environment: <br>
-source <environment_name>/bin/activate
+MacOS: source <environment_name>/bin/activate
+Windows: .\<environment_name>\Scripts\activate
 
 Once the environment is activated, install the libraries.
 
 Dependencies: <br>
 pip install tensorflow <br>
 pip install scikit-learn <br>
-pip install cv2
+pip install opencv-python
