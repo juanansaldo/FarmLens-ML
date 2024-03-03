@@ -83,7 +83,7 @@ def load_and_preprocess_images(directory, target_size=(64, 64), augment=False, r
     images = np.array(images)
     return images, num_channels
 
-# Load the unlabeled strawDI images dataset to train the autoencoder with
+# Load the unlabeled strawDI images dataset
 path = 'C:/Users/juanm/Documents/Capstone/datasets'
 images, num_channels = load_and_preprocess_images(path+"/straw_di", target_size=(64, 64), augment=False,
                                                   rotate_degrees=[90], flips=[0], scale=1.0, colors=['bgr'])
