@@ -1,5 +1,5 @@
-from keras import models, layers, Input, Model
 from sklearn.model_selection import train_test_split
+from keras import models, layers, Input, Model
 import matplotlib.pyplot as plt
 from keras import backend as K
 from tensorflow import keras
@@ -13,51 +13,85 @@ import os
 physical_devices = tf.config.list_physical_devices()
 print("\nAll physical devices:", physical_devices, "\n")
 
-def load_images_from_directory(directory, target_size=(64, 64)):
+def load_and_preprocess_images(directory, target_size=(64, 64), augment=False, rotate_degrees=[90],
+                               flips=[0], scale=1.0, colors=['gray']):
+    
     """
-    Load images from a directory, convert them to a specified size, and normalize pixel values.
+    Load images from a directory, convert them to specified color schemes, resize, normalize pixel values, optionally apply augmentations 
+    including multiple flip orientations, and perform corner detection or template matching.
     
     Parameters:
     - directory: Path to the directory containing images.
     - target_size: A tuple (width, height) representing the target image size.
+    - augment: Boolean indicating whether to apply augmentations.
+    - rotate_degrees: List of degrees to rotate the image. Applied if augment is True.
+    - flips: List of orientations to flip the image. Can include 0 (vertical), 1 (horizontal), or -1 (both).
+    - scale: Scaling factor for the image, with 1.0 meaning no scaling. Applied if augment is True.
+    - colors: List of color schemes to convert images into. Supports 'bgr', 'gray', and 'hsv'.
     
     Returns:
-    - A NumPy array containing the processed image data.
+    - A list of NumPy arrays containing the processed, augmented, and analyzed image data.
+    - The number of channels in the images
     """
+
     images = []
-    # Supported image formats
     image_extensions = ['jpg', 'jpeg', 'png']
-    # Create a list of all image paths in the directory
     image_paths = []
     for extension in image_extensions:
         image_paths.extend(glob.glob(os.path.join(directory, f'*.{extension}')))
     
     for img_path in image_paths:
-        # Load the image in BGR format
-        img = cv2.imread(img_path)
-        # Convert the image from BGR to grayscale
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # Resize the image to the target size
-        img = cv2.resize(img, target_size)
-        # Normalize pixel values to [0, 1]
-        img = img / 255.0
-        images.append(img)
-    
+        original_img = cv2.imread(img_path)
+
+        for color in colors:
+            if color == 'gray':
+                img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
+                num_channels = 1
+            elif color == 'hsv':
+                img = cv2.cvtColor(original_img, cv2.COLOR_BGR2HSV)
+                num_channels = 3
+            else:  # Default to BGR
+                img = original_img
+                num_channels = 3
+            
+            # Resize and normalize the original image
+            img = cv2.resize(img, target_size)
+            img = img / 255.0
+            
+            # Add the original image to the list
+            images.append(img)
+
+            if augment:
+                for degree in rotate_degrees:
+                    for flip in flips:
+                        augmented_img = img.copy()
+
+                        # Rotate image
+                        if degree != 0:
+                            M = cv2.getRotationMatrix2D((target_size[0] / 2, target_size[1] / 2), degree, scale)
+                            augmented_img = cv2.warpAffine(augmented_img, M, target_size)
+                            
+                        # Apply flip
+                        augmented_img = cv2.flip(augmented_img, flip)
+
+                    # Add the augmented image to the list
+                    images.append(augmented_img)
+
     # Convert the list of images to a NumPy array
-    images_array = np.array(images)
-    return images_array
+    images = np.array(images)
+    return images, num_channels
 
 # Load the unlabeled strawDI images dataset to train the autoencoder with
-directory_path = 'C:/Users/juanm/Documents/Capstone/datasets/straw_di'
-images = load_images_from_directory(directory_path, target_size=(64, 64))
+path = 'C:/Users/juanm/Documents/Capstone/datasets/straw_di'
+images, num_channels = load_and_preprocess_images(path, target_size=(64, 64), augment=False,
+                                                  rotate_degrees=[90], flips=[0],
+                                                  scale=1.0, colors=['gray'])
 
-# Normalize
-images = images.astype('float32') / 255
+print(f"Shape of the images: {images.shape}")
 
 # Reshape
 img_width = images.shape[1]
 img_height = images.shape[2]
-num_channels = 1
 images = images.reshape(images.shape[0], img_width, img_height, num_channels)
 input_shape = (img_height, img_width, num_channels)
 
@@ -91,7 +125,7 @@ x = layers.Conv2D(64, 3, padding='same', activation='elu')(x)
 conv_shape = K.int_shape(x)
 
 x = layers.Flatten()(x)
-x = layers.Dense(32, activation='elu')(x)
+x = layers.Dense(64, activation='elu')(x)
 
 # Two outputs, for latent mean and log variance (std)
 # Use these to sample random variables in latent space to which the inputs are mapped
@@ -184,11 +218,12 @@ y = CustomLayer()([input_img, z_decoded, z_mu, z_sigma])
 vae = Model(input_img, y, name='vae')
 
 # Compile VAE
-vae.compile(optimizer='adam', loss=None)
+vae.compile(optimizer='nadam', loss=None)
 vae.summary()
 
 # Train autoencoder
-vae.fit(X_train, None, epochs=10, batch_size=32, validation_split=0.2)
+early_stopping = keras.callbacks.EarlyStopping(patience=2, monitor="loss", restore_best_weights=True)
+vae.fit(X_train, None, epochs=150, callbacks=[early_stopping])
 
 # ===Visualize results===
 # Visualize inputs mapped to the latent space
@@ -199,7 +234,7 @@ mu, _, _ = encoder.predict(X_test)
 
 # plot dim1 and dim2 for mu
 plt.figure(figsize=(12, 12))
-plt.scatter(mu[:, 0], mu[:, 1], cmap='brg')
+plt.scatter(mu[:, 0], mu[:, 1])
 plt.xlabel('dim1')
 plt.ylabel('dim2')
 plt.colorbar()
@@ -212,7 +247,8 @@ plt.show();
 # one image to the other
 sample_vector = np.array([[1,3]])
 decoded_example = decoder.predict(sample_vector)
-decoded_example_reshaped = decoded_example.reshape(img_width, img_height)
+decoded_example_reshaped = decoded_example.reshape(img_width, img_height, num_channels)
+
 plt.imshow(decoded_example_reshaped)
 
 # Let us automate this process by generating multiple images and plotting
@@ -226,8 +262,8 @@ figure = np.zeros((img_width * n, img_height * n, num_channels))
 
 # Create a grid of latent variables, to be provided as inputs to decoder. Predict
 # Creating vectors within range -5 to 5 as that seems to be the range in latent space
-grid_x = np.linspace(-5, 5, n)
-grid_y = np.linspace(-5, 5, n)[::-1]
+grid_x = np.linspace(-9, 9, n)
+grid_y = np.linspace(-9, 9, n)[::-1]
 
 # decoder for each square in the grid
 for i, yi in enumerate(grid_y):
@@ -241,7 +277,7 @@ for i, yi in enumerate(grid_y):
 plt.figure(figsize=(12, 12))
 # Reshape for visualization
 fig_shape = np.shape(figure)
-figure = figure.reshape((fig_shape[0], fig_shape[1]))
+figure = figure.reshape((fig_shape[0], fig_shape[1], fig_shape[2]))
 
 plt.imshow(figure, cmap='gnuplot2')
 plt.show();
