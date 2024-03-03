@@ -47,7 +47,7 @@ def load_images_from_directory(directory, target_size=(64, 64)):
     images_array = np.array(images)
     return images_array
 
-# Load the data
+# Load the unlabeled strawDI images dataset to train the autoencoder with
 directory_path = 'C:/Users/juanm/Documents/Capstone/datasets/straw_di'
 images = load_images_from_directory(directory_path, target_size=(64, 64))
 
@@ -73,7 +73,7 @@ plt.imshow(images[420][:,:,0])
 X_train, X_test = train_test_split(images, test_size=0.3, random_state=0)
 
 #
-# ===Build the model===
+# ===Build the variational autoencoder model for unsupervised pretraining===
 #
 
 # Delete old models
