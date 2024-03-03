@@ -9,6 +9,8 @@ import glob
 import cv2
 import os
 
+# This is the first approach I will be trying out. The goal is to build an object detection model for strawberries.
+
 # List all physical devices
 physical_devices = tf.config.list_physical_devices()
 print("\nAll physical devices:", physical_devices, "\n")
