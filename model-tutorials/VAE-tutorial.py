@@ -1,3 +1,4 @@
+# Source: https://www.youtube.com/watch?v=8wrLjnQ7EWQ
 import tensorflow as tf
 from tensorflow import keras
 from keras import models, layers, Input, Model
