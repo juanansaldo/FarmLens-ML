@@ -84,7 +84,7 @@ def load_and_preprocess_images(directory, target_size=(64, 64), augment=False, r
     return images, num_channels
 
 # Load the unlabeled strawDI images dataset
-path = 'C:/Users/juanm/Documents/Capstone/datasets'
+path = os.getenv('DATASET_PATH')
 images, num_channels = load_and_preprocess_images(path+"/straw_di", target_size=(64, 64), augment=False,
                                                   rotate_degrees=[90], flips=[0], scale=1.0, colors=['bgr'])
 
