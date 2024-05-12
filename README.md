@@ -9,5 +9,5 @@ To activate environment: <br>
 MacOS: source <environment_name>/bin/activate <br>
 Windows: .\\<environment_name>\Scripts\activate
 
-Once the environment is activated, install the libraries.
+Once the environment is activated, install the packages. <br>
 pip install -r requirements.txt
