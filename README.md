@@ -13,3 +13,6 @@ Once the environment is activated, install the packages. <br>
 pip install -r requirements.txt
 
 Download our model weights and custom roboflow data set [here](https://drive.google.com/drive/folders/1xO-qkxcGbAAFphdk8i6Aysu_fjfk_z9Y?usp=sharing).
+
+[FarmLens-Unity repo](https://github.com/novicecodersnail/farmlens) <br>
+[FarmLens-Flask repo](https://github.com/juanansaldo/FarmLens-Flask)
